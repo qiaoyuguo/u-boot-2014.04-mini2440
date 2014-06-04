@@ -129,11 +129,37 @@ copyex:
 	str	r1, [r0]
 # endif
 
+
+#if defined(CONFIG_S3C2440)
+    /* FCLK:HCLK:PCLK = 1:4:8 */
+    ldr    r0, =CLKDIVN
+    mov    r1, #5
+    str    r1, [r0]
+
+    /* change bus mode from "fast bus mode" to "asynchronous bus mode" */
+    mrc p15, 0, r1, c1, c0, 0 /*read ctrl regester*/
+    orr r1, r1, #0xc0000000 /*asynchronous*/
+    mcr p15, 0, r1, c1, c0, 0 /*write ctrl register*/
+
+#define S3C2440_MPLL_400MHZ (0x7f<<12 | 0x2<<4 | 0x1) /* refer to s3c2440.pdf page 255 */
+#define S3C2440_UPLL_48MHZ  (0x38<<12 | 0x2<<4 | 0x2)
+#define MPLLCON 0x4c000004
+#define UPLLCON 0x4c000008
+    ldr r0, =UPLLCON
+    ldr r1, =S3C2440_UPLL_48MHZ 
+    str r1, [r0]
+
+    ldr r0, =MPLLCON
+    ldr r1, =S3C2440_MPLL_400MHZ 
+    str r1, [r0]
+#else /* !CONFIG_S3C2440 */
 	/* FCLK:HCLK:PCLK = 1:2:4 */
 	/* default FCLK is 120 MHz ! */
 	ldr	r0, =CLKDIVN
 	mov	r1, #3
 	str	r1, [r0]
+#endif /* CONFIG_S3C2440 */
+
 #endif	/* CONFIG_S3C24X0 */
 
 	/*
