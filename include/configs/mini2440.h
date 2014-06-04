@@ -13,6 +13,7 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define DEBUG
 /*
  * High Level Configuration Options
  * (easy to change)
@@ -23,7 +24,7 @@
 #define CONFIG_MINI2440		/* on a FriendlyArm MINI2440 Board */
 #define CONFIG_SKIP_LOWLEVEL_INIT
 
-#define CONFIG_SYS_TEXT_BASE	0x33F80000
+#define CONFIG_SYS_TEXT_BASE	0x33E80000
 
 #define CONFIG_SYS_ARM_CACHE_WRITETHROUGH
 

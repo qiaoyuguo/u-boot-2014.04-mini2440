@@ -453,6 +453,7 @@ void board_init_f(ulong bootflag)
 	gd->relocaddr = addr;
 	gd->start_addr_sp = addr_sp;
 	gd->reloc_off = addr - (ulong)&_start;
+	debug("addr=%08lx,_start=%08lx\n", addr,(ulong)&_start);
 	debug("relocation Offset is: %08lx\n", gd->reloc_off);
 	if (new_fdt) {
 		memcpy(new_fdt, gd->fdt_blob, fdt_size);

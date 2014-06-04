@@ -110,8 +110,10 @@ int board_init(void)
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = 0x30000100;
 
+#if 1
 	icache_enable();
 	dcache_enable();
+#endif
 
 	return 0;
 }
