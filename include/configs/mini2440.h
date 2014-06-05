@@ -143,11 +143,14 @@
 /*-----------------------------------------------------------------------
  * FLASH and environment organization
  */
-
 #define CONFIG_SYS_FLASH_CFI
+
+#ifdef CONFIG_SYS_FLASH_CFI
 #define CONFIG_FLASH_CFI_DRIVER
 #define CONFIG_FLASH_CFI_LEGACY
-#define CONFIG_SYS_FLASH_LEGACY_512Kx16
+#define CONFIG_SYS_FLASH_LEGACY_1Mx16
+#endif
+
 #define CONFIG_FLASH_SHOW_PROGRESS	45
 
 #define CONFIG_SYS_MAX_FLASH_BANKS	1

@@ -350,6 +350,24 @@ static const struct amd_flash_info jedec_table[] = {
 		}
 	},
 #endif
+#ifdef CONFIG_SYS_FLASH_LEGACY_1Mx16
+   {
+        .mfr_id     = 0xf0,
+        .dev_id     = 0xea00,
+        .name       = "SST39VF1601",
+        .uaddr      = {
+            [0] = MTD_UADDR_0x5555_0x2AAA, /* x8 */
+            [1] = MTD_UADDR_0x5555_0x2AAA /* x16 */
+        },
+        .DevSize    = SIZE_2MiB,
+        .CmdSet     = P_ID_AMD_STD,
+        .NumEraseRegions= 2,
+        .regions    = {
+                ERASEINFO(0x1000,256),
+                ERASEINFO(0x1000,256)
+        }
+    },
+#endif
 };
 
 static inline void fill_info(flash_info_t *info, const struct amd_flash_info *jedec_entry, ulong base)
