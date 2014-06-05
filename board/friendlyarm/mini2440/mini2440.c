@@ -132,8 +132,13 @@ int board_eth_init(bd_t *bis)
 #ifdef CONFIG_CS8900
 	rc = cs8900_initialize(0, CONFIG_CS8900_BASE);
 #endif
+
+#ifdef CONFIG_DRIVER_DM9000
+    rc = dm9000_initialize(bis);
+#endif
 	return rc;
 }
+
 #endif
 
 /*
