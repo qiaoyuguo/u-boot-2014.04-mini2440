@@ -34,6 +34,7 @@
 #define CONFIG_CMDLINE_TAG	/* enable passing of ATAGs */
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
+#define CONFIG_BOOTARGS "noinitrd root=/dev/mtdblock3 init=/linuxrc console=ttySAC0"
 
 /*
  * Hardware drivers
