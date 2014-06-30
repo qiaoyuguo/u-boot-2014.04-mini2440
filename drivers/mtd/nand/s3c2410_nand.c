@@ -11,6 +11,7 @@
 #include <asm/arch/s3c24x0_cpu.h>
 #include <asm/io.h>
 
+#define	NF_BASE		0x4e000000
 #ifdef CONFIG_S3C2410
 #define S3C2410_NFCONF_EN          (1<<15)
 #define S3C2410_NFCONF_512BYTE     (1<<14)
@@ -38,6 +39,8 @@
 #define S3C2410_ADDR_NCLE 0x0c
 #endif
 
+ulong IO_ADDR_W = CONFIG_SYS_NAND_BASE; 
+
 #ifdef CONFIG_NAND_SPL
 
 /* in the early stage of NAND flash booting, printf() is not available */
@@ -55,20 +58,20 @@ static void nand_read_buf(struct mtd_info *mtd, u_char *buf, int len)
 
 static void s3c2410_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 {
-	struct nand_chip *chip = mtd->priv;
+//	struct nand_chip *chip = mtd->priv;
 	struct s3c2410_nand *nand = s3c2410_get_base_nand();
 
 	debug("hwcontrol(): 0x%02x 0x%02x\n", cmd, ctrl);
 
 	if (ctrl & NAND_CTRL_CHANGE) {
-		ulong IO_ADDR_W = (ulong)nand;
+		IO_ADDR_W = (ulong)nand;
 
 		if (!(ctrl & NAND_CLE))
 			IO_ADDR_W |= S3C2410_ADDR_NCLE;
 		if (!(ctrl & NAND_ALE))
 			IO_ADDR_W |= S3C2410_ADDR_NALE;
 
-		chip->IO_ADDR_W = (void *)IO_ADDR_W;
+//		chip->IO_ADDR_W = (void *)IO_ADDR_W;
 
 #if defined(CONFIG_S3C2410)
 		if (ctrl & NAND_NCE)
@@ -81,16 +84,16 @@ static void s3c2410_hwcontrol(struct mtd_info *mtd, int cmd, unsigned int ctrl)
 #endif
 #if defined(CONFIG_S3C2440)
 		if (ctrl & NAND_NCE)
-			writel(readl(&nand->nfconf) & ~S3C2410_NFCONT_nFCE,
-			       &nand->nfconf);
+			writel(readl(&nand->nfcont) & ~S3C2410_NFCONT_nFCE,
+			       &nand->nfcont);
 		else
-			writel(readl(&nand->nfconf) | S3C2410_NFCONT_nFCE,
-			       &nand->nfconf);
+			writel(readl(&nand->nfcont) | S3C2410_NFCONT_nFCE,
+			       &nand->nfcont);
 	}
 #endif
 
 	if (cmd != NAND_CMD_NONE)
-		writeb(cmd, chip->IO_ADDR_W);
+		writeb(cmd, (void *)IO_ADDR_W);
 }
 
 static int s3c2410_dev_ready(struct mtd_info *mtd)
@@ -110,7 +113,7 @@ void s3c2410_nand_enable_hwecc(struct mtd_info *mtd, int mode)
 #endif
 
 #if defined(CONFIG_S3C2440)
-	writel(readl(&nand->nfconf) | S3C2410_NFCONT_INITECC, &nand->nfconf);
+	writel(readl(&nand->nfcont) | S3C2410_NFCONT_INITECC, &nand->nfcont);
 #endif
 }
 
