@@ -23,6 +23,7 @@
 
 .globl _start
 _start:	b	start_code
+#ifndef CONFIG_NAND_SPL
 	ldr	pc, _undefined_instruction
 	ldr	pc, _software_interrupt
 	ldr	pc, _prefetch_abort
@@ -38,7 +39,9 @@ _data_abort:		.word data_abort
 _not_used:		.word not_used
 _irq:			.word irq
 _fiq:			.word fiq
-
+#else
+	. = _start + 64
+#endif
 	.balignl 16,0xdeadbeef
 
 
@@ -54,6 +57,37 @@ _fiq:			.word fiq
  *
  *************************************************************************
  */
+.globl _TEXT_BASE
+_TEXT_BASE:
+#if defined(CONFIG_SPL_BUILD) && defined(CONFIG_SPL_TEXT_BASE)
+	.word	CONFIG_SPL_TEXT_BASE
+#else
+	.word	CONFIG_SYS_TEXT_BASE
+#endif
+
+
+/*
+ * These are defined in the board-specific linker script.
+ * Subtracting _start from them lets the linker put their
+ * relative position in the executable instead of leaving
+ * them null.
+ */
+.globl _bss_start_ofs
+_bss_start_ofs:
+	.word __bss_start - _start
+
+.globl _image_copy_end_ofs
+_image_copy_end_ofs:
+	.word __image_copy_end - _start
+
+.globl _bss_end_ofs
+_bss_end_ofs:
+	.word __bss_end - _start
+
+.globl _end_ofs
+_end_ofs:
+	.word _end - _start
+
 
 #ifdef CONFIG_USE_IRQ
 /* IRQ stack memory (calculated at run-time) */
@@ -166,19 +200,92 @@ copyex:
 	 * we do sys-critical inits only at reboot,
 	 * not when booting from ram!
 	 */
-#ifndef CONFIG_SKIP_LOWLEVEL_INIT
+#if (!defined(CONFIG_SKIP_LOWLEVEL_INIT) || defined(CONFIG_NAND_SPL))
 	bl	cpu_init_crit
 #endif
 
 	bl	_main
 
 /*------------------------------------------------------------------------------*/
+#ifdef CONFIG_NAND_SPL
+/*
+ * void relocate_code(addr_moni)
+ *
+ * This function relocates the monitor code.
+ */
+	.globl	relocate_code
+relocate_code:
+	mov	r6, r0	/* save addr of destination */
 
+	adr	r0, _start
+	subs	r9, r6, r0		/* r9 <- relocation offset */
+	beq	relocate_done		/* skip relocation */
+	mov	r1, r6			/* r1 <- scratch for copy_loop */
+	ldr	r3, _image_copy_end_ofs
+	add	r2, r0, r3		/* r2 <- source end address	    */
+
+copy_loop:
+	ldmia	r0!, {r10-r11}		/* copy from source address [r0]    */
+	stmia	r1!, {r10-r11}		/* copy to   target address [r1]    */
+	cmp	r0, r2			/* until source end address [r2]    */
+	blo	copy_loop
+
+#ifndef CONFIG_SPL_BUILD
+	/*
+	 * fix .rel.dyn relocations
+	 */
+	ldr	r0, _TEXT_BASE		/* r0 <- Text base */
+	ldr	r10, _dynsym_start_ofs	/* r10 <- sym table ofs */
+	add	r10, r10, r0		/* r10 <- sym table in FLASH */
+	ldr	r2, _rel_dyn_start_ofs	/* r2 <- rel dyn start ofs */
+	add	r2, r2, r0		/* r2 <- rel dyn start in FLASH */
+	ldr	r3, _rel_dyn_end_ofs	/* r3 <- rel dyn end ofs */
+	add	r3, r3, r0		/* r3 <- rel dyn end in FLASH */
+fixloop:
+	ldr	r0, [r2]		/* r0 <- location to fix up, IN FLASH! */
+	add	r0, r0, r9		/* r0 <- location to fix up in RAM */
+	ldr	r1, [r2, #4]
+	and	r7, r1, #0xff
+	cmp	r7, #23			/* relative fixup? */
+	beq	fixrel
+	cmp	r7, #2			/* absolute fixup? */
+	beq	fixabs
+	/* ignore unknown type of fixup */
+	b	fixnext
+fixabs:
+	/* absolute fix: set location to (offset) symbol value */
+	mov	r1, r1, LSR #4		/* r1 <- symbol index in .dynsym */
+	add	r1, r10, r1		/* r1 <- address of symbol in table */
+	ldr	r1, [r1, #4]		/* r1 <- symbol value */
+	add	r1, r1, r9		/* r1 <- relocated sym addr */
+	b	fixnext
+fixrel:
+	/* relative fix: increase location by offset */
+	ldr	r1, [r0]
+	add	r1, r1, r9
+fixnext:
+	str	r1, [r0]
+	add	r2, r2, #8		/* each rel.dyn entry is 8 bytes */
+	cmp	r2, r3
+	blo	fixloop
+#endif
+
+relocate_done:
+
+	mov	pc, lr
+
+_rel_dyn_start_ofs:
+	.word __rel_dyn_start - _start
+_rel_dyn_end_ofs:
+	.word __rel_dyn_end - _start
+_dynsym_start_ofs:
+	.word __dynsym_start - _start
+
+#endif
 	.globl	c_runtime_cpu_setup
 c_runtime_cpu_setup:
 
 	mov	pc, lr
-
 /*
  *************************************************************************
  *
@@ -191,7 +298,7 @@ c_runtime_cpu_setup:
  */
 
 
-#ifndef CONFIG_SKIP_LOWLEVEL_INIT
+#if !defined(CONFIG_SKIP_LOWLEVEL_INIT) || defined(CONFIG_NAND_SPL)
 cpu_init_crit:
 	/*
 	 * flush v4 I/D caches
@@ -320,6 +427,7 @@ cpu_init_crit:
 	ldr	sp, FIQ_STACK_START
 	.endm
 
+#ifndef CONFIG_NAND_SPL
 /*
  * exception handlers
  */
@@ -384,4 +492,5 @@ fiq:
 	bad_save_user_regs
 	bl	do_fiq
 
+#endif
 #endif

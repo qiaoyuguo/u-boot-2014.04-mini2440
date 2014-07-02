@@ -14,6 +14,12 @@
 #include <asm/io.h>
 #include <asm/arch/s3c24x0_cpu.h>
 
+//#include <asm/arch/iomux.h>
+//#include <asm/arch/gpio.h>
+//#include <asm/io.h>
+//#include <asm/gpio.h>
+//#include <netdev.h>
+
 DECLARE_GLOBAL_DATA_PTR;
 
 #define FCLK_SPEED 2

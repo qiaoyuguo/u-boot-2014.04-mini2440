@@ -121,11 +121,23 @@ static int s3c2410_nand_calculate_ecc(struct mtd_info *mtd, const u_char *dat,
 				      u_char *ecc_code)
 {
 	struct s3c2410_nand *nand = s3c2410_get_base_nand();
+#ifndef CONFIG_S3C2440
 	ecc_code[0] = readb(&nand->nfecc);
 	ecc_code[1] = readb(&nand->nfecc + 1);
 	ecc_code[2] = readb(&nand->nfecc + 2);
 	debug("s3c2410_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x\n",
 	       mtd , ecc_code[0], ecc_code[1], ecc_code[2]);
+#else
+	unsigned long ecc = readl(&nand->nfeccd0);
+	ecc_code[0] = ecc & 0xff;
+	ecc_code[1] = (ecc >> 8) & 0xff;
+	ecc_code[2] = (ecc >> 16) & 0xff;
+	ecc_code[3] = (ecc >> 24) & 0xff;
+	
+	debug("s3c2410_nand_calculate_hwecc(%p,): 0x%02x 0x%02x 0x%02x 0x%02x\n",
+	       mtd , ecc_code[0], ecc_code[1], ecc_code[2], ecc_code[3]);
+
+#endif
 
 	return 0;
 }

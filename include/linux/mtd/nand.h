@@ -696,7 +696,9 @@ struct platform_nand_chip *get_platform_nandchip(struct mtd_info *mtd)
 /* Standard NAND functions from nand_base.c */
 void nand_write_buf(struct mtd_info *mtd, const uint8_t *buf, int len);
 void nand_write_buf16(struct mtd_info *mtd, const uint8_t *buf, int len);
+#ifndef CONFIG_NAND_SPL
 void nand_read_buf(struct mtd_info *mtd, uint8_t *buf, int len);
+#endif
 void nand_read_buf16(struct mtd_info *mtd, uint8_t *buf, int len);
 uint8_t nand_read_byte(struct mtd_info *mtd);
 

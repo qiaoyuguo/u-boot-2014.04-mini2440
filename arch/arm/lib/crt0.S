@@ -73,7 +73,7 @@ ENTRY(_main)
 	mov	r0, #0
 	bl	board_init_f
 
-#if ! defined(CONFIG_SPL_BUILD)
+#if ! (defined(CONFIG_SPL_BUILD) || defined(CONFIG_NAND_SPL))
 
 /*
  * Set up intermediate environment (new sp and gd) and call
